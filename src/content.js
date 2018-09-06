@@ -71,7 +71,7 @@ const main = () => {
   const reIgnores = /(\r\n|\n|\r|,|\.)/gm;
 
   document.body.addEventListener("mousemove", ev => {
-    const textAtCursor = atcursor(ev.target, ev.clientX, ev.clientY);
+    const textAtCursor = atcursor(ev);
     if (!textAtCursor) {
       return;
     }

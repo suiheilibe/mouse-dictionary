@@ -1,8 +1,16 @@
-export default (element, clientX, clientY) => {
+export default (ev) => {
+  const {target, clientX, clientY, rangeParent, rangeOffset} = ev;
   let textOnCursor = null;
 
   try {
-    const range = element.ownerDocument.caretRangeFromPoint(clientX, clientY);
+    let range = null;
+    const doc = target.ownerDocument;
+    if (doc.caretRangeFromPoint != null) { // for Chrome
+      range = doc.caretRangeFromPoint(clientX, clientY);
+    } else if (rangeParent != null) { // for Firefox
+      range = doc.createRange();
+      range.setStart(rangeParent, rangeOffset);
+    }
     if (range) {
       const container = range.startContainer;
       const startOffset = range.startOffset;
