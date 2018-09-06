@@ -2,14 +2,21 @@ export default (element, clientX, clientY) => {
   let textOnCursor = null;
 
   try {
-    const range = element.ownerDocument.caretRangeFromPoint(clientX, clientY);
-    if (range) {
-      const container = range.startContainer;
-      const startOffset = range.startOffset;
-
-      if (container.nodeType == Node.TEXT_NODE) {
-        textOnCursor = getTextFromRange(container.data, startOffset);
-      }
+    let range = null;
+    let container = null;
+    let offset = null;
+    const doc = element.ownerDocument;
+    if (doc.caretRangeFromPoint != null) {
+      range = doc.caretRangeFromPoint(clientX, clientY);
+      container = range.startContainer;
+      offset = range.startOffset;
+    } else if (doc.caretPositionFromPoint != null) {
+      range = doc.caretPositionFromPoint(clientX, clientY);
+      container = range.offsetNode;
+      offset = range.offset;
+    }
+    if (container != null && container.nodeType == Node.TEXT_NODE) {
+      textOnCursor = getTextFromRange(container.data, offset);
     }
   } catch (err) {
     textOnCursor = null;
