@@ -2,7 +2,9 @@
   "name": "Mouse Dictionary",
   "description": "Mouse Dictionary",
   "version": "1.0.5",
-  "options_page": "options/options.html",
+  "options_ui": {
+    "page": "options/options.html"
+  },
   "permissions": ["storage", "unlimitedStorage", "activeTab", "tabs", "http://*/*", "https://*/*"],
   "background": {
     "scripts": ["background.js"],
