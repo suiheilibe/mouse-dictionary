@@ -2,21 +2,12 @@ export default (element, clientX, clientY) => {
   let textOnCursor = null;
 
   try {
-    let range = null;
-    let container = null;
-    let offset = null;
-    const doc = element.ownerDocument;
-    if (doc.caretRangeFromPoint != null) {
-      range = doc.caretRangeFromPoint(clientX, clientY);
-      container = range.startContainer;
-      offset = range.startOffset;
-    } else if (doc.caretPositionFromPoint != null) {
-      range = doc.caretPositionFromPoint(clientX, clientY);
-      container = range.offsetNode;
-      offset = range.offset;
-    }
-    if (container != null && container.nodeType == Node.TEXT_NODE) {
-      textOnCursor = getTextFromRange(container.data, offset);
+    const nao = getCaretNodeAndOffsetFromPoint(element.ownerDocument, clientX, clientY);
+    if (nao) {
+      const { node, offset } = nao;
+      if (node.nodeType === Node.TEXT_NODE) {
+        textOnCursor = getTextFromRange(node.data, offset);
+      }
     }
   } catch (err) {
     textOnCursor = null;
@@ -78,4 +69,26 @@ const getTextFromRange = (text, offset) => {
   const endIndex = searchEndIndex(text, offset);
 
   return text.substring(startIndex, endIndex);
+};
+
+const getCaretNodeAndOffsetFromPoint = (ownerDocument, pointX, pointY) => {
+  let node = null;
+  let offset = null;
+  if (ownerDocument.caretRangeFromPoint != null) { // for Firefox (based on recent WD of CSSOM View Module)
+    const position = ownerDocument.caretRangeFromPoint(pointX, pointY);
+    if (position) {
+      node = position.startContainer;
+      offset = position.startOffset;
+    }
+  } else if (ownerDocument.caretPositionFromPoint != null) { // for Chrome
+    const range = ownerDocument.caretPositionFromPoint(pointX, pointY);
+    if (range) {
+      node = range.offsetNode;
+      offset = range.offset;
+    }
+  } else {
+    return null;
+  }
+
+  return { node, offset };
 };
