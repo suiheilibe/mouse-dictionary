@@ -21,6 +21,7 @@ module.exports = {
   mode: process.env.NODE_ENV || "development",
   entry: {
     "options/options": "./src/options/main.jsx",
+    "sidebar/sidebar": "./src/sidebar/sidebar.js",
     main: "./src/main/main.js"
   },
   output: {

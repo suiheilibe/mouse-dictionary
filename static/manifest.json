@@ -17,6 +17,10 @@
     "default_icon": "icon48.png",
     "default_title": "Mouse Dictionary"
   },
+  "sidebar_action": {
+    "default_title": "Mouse Dictionary",
+    "default_panel": "sidebar/sidebar.html"
+  },
   "commands": {
     "_execute_browser_action": {
       "description": "Activate the extension"
