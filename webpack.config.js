@@ -1,58 +1,67 @@
-const CopyWebpackPlugin = require("copy-webpack-plugin");
+const CopyPlugin = require("copy-webpack-plugin");
 const TerserPlugin = require("terser-webpack-plugin");
-const LodashWebpackPlugin = require("lodash-webpack-plugin");
-const UniteJsonPlugin = require("./webpack_plugins/UniteJsonPlugin");
+const LodashPlugin = require("lodash-webpack-plugin");
+const UniteJsonPlugin = require("./build_tools/webpack_plugins/UniteJsonPlugin");
 const jaRule = require("deinja/src/data");
 
-const isProd = process.env.NODE_ENV === "production";
+const mode = process.env.NODE_ENV || "development";
+const isProd = mode === "production";
 
-const copyWebpackPluginConfigs = [
-  { from: "static", to: "." },
-  { from: __dirname + "/node_modules/milligram/dist/milligram.min.css", to: "options/" },
-  { from: __dirname + "/node_modules/ace-builds/src-min-noconflict/worker-html.js", to: "options/" },
-  { from: __dirname + "/node_modules/ace-builds/src-min-noconflict/worker-json.js", to: "options/" }
-];
+const copyWebpackPluginConfigs = {
+  patterns: [
+    { from: "static", to: "." },
+    { from: __dirname + "/node_modules/milligram/dist/milligram.min.css", to: "options/" },
+    { from: __dirname + "/node_modules/ace-builds/src-min-noconflict/worker-html.js", to: "options/" },
+    { from: __dirname + "/node_modules/ace-builds/src-min-noconflict/worker-json.js", to: "options/" },
+  ],
+};
 
 if (!isProd) {
-  copyWebpackPluginConfigs.push({ from: "static_overwrite", to: "." });
+  copyWebpackPluginConfigs.patterns.push({ from: "static_overwrite", to: "." });
 }
 
 module.exports = {
-  mode: process.env.NODE_ENV || "development",
+  mode: mode,
   entry: {
-    "options/options": "./src/options/main.jsx",
     "sidebar/sidebar": "./src/sidebar/sidebar.js",
-    main: "./src/main/main.js"
+    "options/options": "./src/options/app.tsx",
+    main: "./src/main/main.js",
   },
   output: {
-    path: __dirname + "/dist"
+    path: __dirname + "/dist",
   },
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.(:?js|ts)$/,
         use: {
-          loader: "babel-loader"
+          loader: "babel-loader",
+          options: {
+            cacheDirectory: !isProd,
+          },
         },
-        exclude: /node_modules/
+        exclude: /node_modules/,
       },
       {
-        test: /\.jsx$/,
+        test: /\.(:?jsx|tsx)$/,
         use: [
           {
             loader: "babel-loader",
-            options: { presets: ["@babel/env", "@babel/react"] }
-          }
+            options: {
+              cacheDirectory: !isProd,
+              presets: ["@babel/env", "@babel/react"],
+            },
+          },
         ],
-        exclude: /node_modules/
-      }
-    ]
+        exclude: /node_modules/,
+      },
+    ],
   },
   resolve: {
-    extensions: [".js", ".jsx"]
+    extensions: [".js", ".jsx", ".ts", ".tsx"],
   },
   plugins: [
-    new CopyWebpackPlugin(copyWebpackPluginConfigs),
+    new CopyPlugin(copyWebpackPluginConfigs),
     new UniteJsonPlugin([
       {
         from: [
@@ -63,17 +72,17 @@ module.exports = {
           { name: "spelling", file: "rule/spelling.json5" },
           { name: "trailing", file: "rule/trailing.json5" },
           { name: "verb", file: "rule/verb.json5" },
-          { name: "ja", data: jaRule }
+          { name: "ja", data: jaRule },
         ],
-        to: "data/rule.json"
-      }
+        to: "data/rule.json",
+      },
     ]),
-    new LodashWebpackPlugin()
+    new LodashPlugin(),
   ],
   devtool: isProd ? false : "cheap-module-inline-source-map",
   performance: {
     maxEntrypointSize: 1000000,
-    maxAssetSize: 3000000
+    maxAssetSize: 3000000,
   },
   optimization: {
     minimize: isProd,
@@ -81,10 +90,10 @@ module.exports = {
       new TerserPlugin({
         terserOptions: {
           compress: {
-            pure_funcs: ["console.info", "console.warn", "console.time", "console.timeEnd"]
-          }
-        }
-      })
-    ]
-  }
+            pure_funcs: ["console.info", "console.warn", "console.time", "console.timeEnd"],
+          },
+        },
+      }),
+    ],
+  },
 };

@@ -4,9 +4,9 @@
  * Licensed under MIT
  */
 
-const loadJson = async fname => {
+const loadJson = async (fname) => {
   const url = chrome.extension.getURL(fname);
-  return fetch(url).then(r => r.json());
+  return fetch(url).then((r) => r.json());
 };
 
 const updateMap = (map, data) => {
@@ -22,7 +22,7 @@ const updateMap = (map, data) => {
  */
 const omap = (object, func, specifiedProps) => {
   const result = {};
-  const props = specifiedProps || Object.keys(object);
+  const props = specifiedProps ?? Object.keys(object);
   for (let i = 0; i < props.length; i++) {
     const prop = props[i];
     result[prop] = func ? func(object[prop]) : null;
@@ -53,7 +53,7 @@ const isInsideRange = (range, position) => {
   );
 };
 
-const convertToInt = str => {
+const convertToInt = (str) => {
   let r;
   if (str === null || str === undefined || str === "") {
     r = 0;
@@ -66,7 +66,7 @@ const convertToInt = str => {
   return r;
 };
 
-const convertToStyles = position => {
+const convertToStyles = (position) => {
   const styles = {};
   const keys = Object.keys(position);
   for (let i = 0; i < keys.length; i++) {
@@ -87,7 +87,7 @@ const optimizeInitialPosition = (position, minWindowSize = 50, edgeSpace = 5) =>
     left: range(edgeSpace, position.left, windowWidth - position.width - edgeSpace),
     top: range(edgeSpace, position.top, windowHeight - position.height - edgeSpace),
     width: range(minWindowSize, position.width, windowWidth - edgeSpace * 2),
-    height: range(minWindowSize, position.height, windowHeight - edgeSpace * 2)
+    height: range(minWindowSize, position.height, windowHeight - edgeSpace * 2),
   };
 };
 
@@ -116,11 +116,7 @@ const min = (a, b) => {
 
 const getSelection = () => {
   const selection = window.getSelection();
-  return selection
-    .toString()
-    .replace("\r", " ")
-    .replace("\n", " ")
-    .trim();
+  return selection.toString().replace("\r", " ").replace("\n", " ").trim();
 };
 
 export default {
@@ -132,5 +128,5 @@ export default {
   convertToInt,
   convertToStyles,
   optimizeInitialPosition,
-  getSelection
+  getSelection,
 };

@@ -14,7 +14,7 @@
     { search: "bbed", new: "b" },
     { search: "rred", new: "r" },
     { search: "zzed", new: "z" },
-    { search: "ied", new: "y" }
+    { search: "ied", new: "y" },
   ],
   [
     { search: "nning", new: "n" },
@@ -27,11 +27,31 @@
     { search: "rring", new: "r" },
     { search: "lling", new: "l" },
     { search: "zzing", new: "z" },
-    { search: "ing", new: "" }
+    { search: "ing", new: "" },
+  ],
+  [
+    { search: "er", new: "e" },
+    { search: "est", new: "e" },
+  ],
+  [
+    { search: "tter", new: "t" },
+    { search: "ttest", new: "t" },
+    { search: "dder", new: "d" },
+    { search: "ddest", new: "d" },
+    { search: "gger", new: "g" },
+    { search: "ggest", new: "g" },
+    { search: "ppier", new: "ppy" },
+    { search: "ppiest", new: "ppy" },
+    { search: "nner", new: "n" },
+    { search: "nnest", new: "n" },
+    { search: "ier", new: "y" },
+    { search: "iest", new: "y" },
+    { search: "er", new: "" },
+    { search: "est", new: "" },
   ],
   [
     { search: "ying", new: "ie" },
-    { search: "ing", new: "e" }
+    { search: "ing", new: "e" },
   ],
   [{ search: "ed", new: "" }],
   [{ search: "ed", new: "e" }],
@@ -47,5 +67,5 @@
   [{ search: "li", new: "us" }],
   [{ search: "ia", new: "ium" }],
   [{ search: "gi", new: "gus" }],
-  [{ search: "ses", new: "sis" }]
+  [{ search: "ses", new: "sis" }],
 ]

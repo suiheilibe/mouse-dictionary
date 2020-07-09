@@ -29,7 +29,7 @@ export default class Lookuper {
     const cacheSize = process.env.NODE_ENV === "production" ? 100 : 0;
     this.shortCache = new ShortCache(cacheSize);
 
-    this.reForReferences = /[→＝]([ A-z]+)/g;
+    this.reForReferences = /[→＝]([- A-z']+)/g;
   }
 
   canUpdate() {
@@ -61,7 +61,7 @@ export default class Lookuper {
     await this.update(text, true, true, false, 1);
   }
 
-  async update(text, withCapitalized, includeOriginalText, enableShortWord, threshold) {
+  async update(text, withCapitalized, includeOriginalText, enableShortWord, threshold = 0) {
     if (!text) {
       return;
     }
@@ -103,7 +103,7 @@ export default class Lookuper {
 
 const fetchDescriptions = async (entries, reForReferences) => {
   const baseDescriptions = await storage.local.get(entries);
-  const baseHeads = entries.filter(e => baseDescriptions[e]);
+  const baseHeads = entries.filter((e) => baseDescriptions[e]);
 
   console.time("lookup2");
   const refHeads = pickOutRefs(baseDescriptions, reForReferences);

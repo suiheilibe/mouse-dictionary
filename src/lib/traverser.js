@@ -5,6 +5,7 @@
  */
 
 import dom from "./dom";
+import decoy from "./decoy";
 
 const build = (doConfirmValidCharacter, maxWords) => {
   const traverser = new Traverser(doConfirmValidCharacter, maxWords);
@@ -26,8 +27,9 @@ const build = (doConfirmValidCharacter, maxWords) => {
 class Traverser {
   constructor(doGetTargetCharacterType, maxWords) {
     this.JA_MAX_LENGTH = 40;
-    this.getTargetCharacterType = doGetTargetCharacterType || (code => (isEnglishLikeCharacter(code) ? 3 : 0));
-    this.maxWords = maxWords || 8;
+    this.getTargetCharacterType = doGetTargetCharacterType ?? ((code) => (isEnglishLikeCharacter(code) ? 3 : 0));
+    this.maxWords = maxWords ?? 8;
+    this.decoy = decoy.create("div");
   }
 
   fetchTextUnderCursor(element, clientX, clientY) {
@@ -36,10 +38,16 @@ class Traverser {
       return null;
     }
     const { node, offset } = range;
-    if (node.nodeType !== Node.TEXT_NODE) {
-      return null;
+
+    if (node.nodeType === Node.TEXT_NODE) {
+      return this.fetchTextFromTextNode(node, offset, this.maxWords);
     }
-    return this.fetchTextFromTextNode(node, offset, this.maxWords);
+
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      return this.fetchTextFromElementNode(element, clientX, clientY);
+    }
+
+    return null;
   }
 
   fetchTextFromTextNode(textNode, offset) {
@@ -53,6 +61,24 @@ class Traverser {
       ? searchEndIndex(concatenatedText, 0, this.maxWords, this.getTargetCharacterType)
       : this.JA_MAX_LENGTH;
     return concatenatedText.substring(0, endIndex);
+  }
+
+  fetchTextFromElementNode(element, clientX, clientY) {
+    try {
+      this.decoy.activate(element);
+
+      const range = getCaretNodeAndOffsetFromPoint(element.ownerDocument, clientX, clientY);
+      if (!range) {
+        return;
+      }
+      const { node, offset } = range;
+
+      if (node.nodeType === Node.TEXT_NODE) {
+        return this.fetchTextFromTextNode(node, offset, this.maxWords);
+      }
+    } finally {
+      this.decoy.deactivate();
+    }
   }
 
   getTextFromRange(sourceText, offset) {
@@ -148,7 +174,7 @@ let getCaretNodeAndOffsetFromPoint = (ownerDocument, pointX, pointY) => {
   return getCaretNodeAndOffsetFromPoint(ownerDocument, pointX, pointY);
 };
 
-const createGetCaretNodeAndOffsetFromPointFunction = ownerDocument => {
+const createGetCaretNodeAndOffsetFromPointFunction = (ownerDocument) => {
   let newFunction;
   if (ownerDocument.caretPositionFromPoint) {
     // for Firefox (based on recent WD of CSSOM View Module)
@@ -159,7 +185,7 @@ const createGetCaretNodeAndOffsetFromPointFunction = ownerDocument => {
       }
       return {
         node: position.offsetNode,
-        offset: position.offset
+        offset: position.offset,
       };
     };
   } else if (ownerDocument.caretRangeFromPoint) {
@@ -171,13 +197,13 @@ const createGetCaretNodeAndOffsetFromPointFunction = ownerDocument => {
       }
       return {
         node: range.startContainer,
-        offset: range.startOffset
+        offset: range.startOffset,
       };
     };
   }
   return newFunction;
 };
 
-const isEnglishLikeCharacter = code => 0x20 <= code && code <= 0x7e;
+const isEnglishLikeCharacter = (code) => 0x20 <= code && code <= 0x7e;
 
 export default { build };

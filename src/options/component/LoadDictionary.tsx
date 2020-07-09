@@ -5,22 +5,22 @@
  */
 
 import React from "react";
-import SimpleSelect from "./SimpleSelect.jsx";
+import SimpleSelect from "./SimpleSelect";
 import res from "../logic/resource";
 import env from "../../settings/env";
 
-const LoadDictionary = props => {
+const LoadDictionary = (props) => {
   const ENCODINGS = [
     { id: "Shift-JIS", name: "Shift-JIS" },
     { id: "UTF-8", name: "UTF-8" },
-    { id: "UTF-16", name: "UTF-16" }
+    { id: "UTF-16", name: "UTF-16" },
   ];
 
   const FORMATS = [
     { id: "EIJIRO", name: res.get("formatEijiroText") },
     { id: "TSV", name: res.get("formatTsv") },
     { id: "PDIC_LINE", name: res.get("formatPdicOneLine") },
-    { id: "JSON", name: res.get("formatJson") }
+    { id: "JSON", name: res.get("formatJson") },
   ];
 
   const changeState = (name, e) => {

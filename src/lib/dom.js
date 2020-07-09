@@ -4,7 +4,7 @@
  * Licensed under MIT
  */
 
-const create = html => {
+const create = (html) => {
   const template = document.createElement("template");
   template.innerHTML = html.trim();
   return template.content.firstChild;
@@ -31,7 +31,7 @@ const replace = (element, newDom) => {
 const MAX_TRAVERSE_LEVEL = 4;
 const MAX_TRAVERSE_WORDS = 10;
 
-const traverse = elem => {
+const traverse = (elem) => {
   const resultWords = [];
 
   let current = elem;
@@ -56,7 +56,7 @@ const traverse = elem => {
   return joinWords(resultWords.slice(0, MAX_TRAVERSE_WORDS));
 };
 
-const joinWords = words => {
+const joinWords = (words) => {
   const newWords = [];
   let i = 0;
   for (;;) {
@@ -116,6 +116,58 @@ const getChildren = (elem, skip) => {
     result.push(child);
   }
   return result.reverse();
+};
+
+const clone = (orgElement, baseElement) => {
+  const clonedElement = baseElement ?? document.createElement(orgElement.tagName);
+
+  // Copy all styles
+  clonedElement.style.cssText = getComputedCssText(orgElement);
+
+  return clonedElement;
+};
+
+const getComputedCssText = (element) => {
+  const computedStyle = getComputedStyle(element, "");
+  if (computedStyle.cssText) {
+    return computedStyle.cssText;
+  }
+  const styles = [];
+
+  for (let key in computedStyle) {
+    if (!isNumberString(key)) {
+      const value = computedStyle[key];
+      styles.push(`${key}:${value}`);
+    }
+  }
+  return styles.join(";");
+};
+
+const isNumberString = (str) => {
+  if (!str) {
+    return false;
+  }
+  let isNumberStr = true;
+  for (let i = 0; i < str.length; i++) {
+    const code = str.charCodeAt(i);
+    const isNumberChar = code >= 48 && code <= 57;
+    if (!isNumberChar) {
+      isNumberStr = false;
+      break;
+    }
+  }
+  return isNumberStr;
+};
+
+// "100px" -> 100.0
+const pxToFloat = (str) => {
+  if (!str) {
+    return 0;
+  }
+  if (str.endsWith("px")) {
+    return parseFloat(str.slice(0, -2));
+  }
+  return parseFloat(str);
 };
 
 /**
@@ -178,4 +230,4 @@ class VirtualStyle {
   }
 }
 
-export default { create, applyStyles, replace, traverse, VirtualStyle };
+export default { create, applyStyles, replace, traverse, clone, pxToFloat, VirtualStyle };

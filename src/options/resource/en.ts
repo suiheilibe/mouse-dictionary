@@ -14,7 +14,7 @@ export default {
   readDictData: "Load dictionary data:",
 
   selectDictFile: "Select dictionary data",
-  progressRegister: "%d words have registered(%s)",
+  progressRegister: "%d words have been registered(%s)",
   finishRegister: "Loading has finished(%d words)",
   clearAllDictData: "Are you sure you want to clear all the dictionary data?",
   finishedClear: "All the dictionary data has been removed",
@@ -86,5 +86,5 @@ export default {
   JsonImportError: "Invalid JSON",
   clipboardJson: "Copy to clipboard",
   aboutJsonEditor:
-    "This is JSON data which expresses the whole Mouse Dictionary's settings. Please use it for backup, sharing and so forth."
+    "This is JSON data which expresses the whole Mouse Dictionary's settings. Please use it for backup, sharing and so forth.",
 };
