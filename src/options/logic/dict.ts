@@ -4,94 +4,114 @@
  * Licensed under MIT
  */
 
-import LineReader from "./linereader";
-import EijiroParser from "./eijiroparser";
-import SimpleDictParser from "./simpledictparser";
-import JsonDictParser from "./jsondictparser";
-import storage from "../../lib/storage";
-import env from "../../settings/env";
+import { LineReader } from "./linereader";
+import { EijiroParser, SimpleDictParser, JsonDictParser } from "./dictparser";
+import { env, storage } from "../extern";
 
-const load = async ({ file, encoding, format, event }) => {
-  let parser = null;
-  switch (format) {
-    case "TSV":
-      parser = new SimpleDictParser("\t");
-      break;
-    case "PDIC_LINE":
-      parser = new SimpleDictParser(" /// ");
-      break;
-    case "EIJIRO":
-      parser = new EijiroParser();
-      break;
-    case "JSON":
-      parser = new JsonDictParser();
-      break;
+type ProgressCallback = (wordCount: number, progress: string) => void;
+
+type DictionaryInformation = {
+  files: string[];
+};
+
+type Callback = (param: CallbackParam) => void;
+type ReadingCallback = (param: ReadingCallbackParam) => void;
+// type LoadingCallback = (param: LoadingCallbackParam) => void;
+
+type CallbackParam = ReadingCallbackParam | LoadingCallbackParam;
+
+type ReadingCallbackParam = {
+  name: "reading";
+  loaded: number;
+  total: number;
+};
+
+type LoadingCallbackParam = {
+  name: "loading";
+  count: number;
+  word: HeadWord;
+};
+
+type LoadParam = {
+  file: Blob;
+  encoding: string;
+  format: string;
+};
+
+type HeadWord = {
+  head: string;
+  desc: string;
+};
+
+export const load = async (loadParam: LoadParam, callback: Callback): Promise<number> => {
+  const fileContent = await readAsText(loadParam.file, loadParam.encoding, (e) => {
+    callback({ name: "reading", loaded: e.loaded, total: e.total });
+  });
+
+  const reader = new LineReader(fileContent);
+
+  let dictData = {};
+  let wordCount = 0;
+
+  const parser = createDictParser(loadParam.format);
+  while (reader.next()) {
+    const hd: HeadWord = parser.addLine(reader.getLine());
+    if (!hd) {
+      continue;
+    }
+    dictData[hd.head] = hd.desc;
+    wordCount += 1;
+    if (wordCount === 1 || (wordCount > 1 && wordCount % env.registerRecordsAtOnce === 0)) {
+      callback({ name: "loading", count: wordCount, word: hd });
+      const tmp = dictData;
+      dictData = {};
+      await storage.local.set(tmp);
+    }
   }
-  if (parser === null) {
-    throw new Error("Unknown File Format: " + format);
+
+  const lastData = parser.flush();
+  if (lastData) {
+    Object.assign(dictData, lastData);
+    wordCount += Object.keys(lastData).length;
   }
+  await storage.local.set(dictData);
+  return wordCount;
+};
 
-  const ev = event ?? (() => {});
-
-  return new Promise((resolve, reject) => {
-    let wordCount = 0;
-    const reader = new FileReader();
-    reader.onprogress = (e) => {
-      ev({ name: "reading", loaded: e.loaded, total: e.total });
-    };
-    reader.onload = (e) => {
-      const data = e.target.result;
-
-      let dictData = {};
-      const reader = new LineReader(data);
-      reader.eachLine(
-        (line) => {
-          const hd = parser.addLine(line);
-          if (hd) {
-            dictData[hd.head] = hd.desc;
-            wordCount += 1;
-
-            if (wordCount === 1 || (wordCount >= 1 && wordCount % env.registerRecordsAtOnce === 0)) {
-              ev({ name: "loading", count: wordCount, word: hd });
-              let tmp = dictData;
-              dictData = {};
-              return save(tmp);
-            }
-          }
-        },
-        () => {
-          // finished
-          let lastData;
-          try {
-            lastData = parser.flush();
-          } catch (e) {
-            reject(e);
-          }
-          if (lastData) {
-            Object.assign(dictData, lastData);
-            wordCount += Object.keys(lastData).length;
-          }
-
-          save(dictData).then(
-            () => {
-              resolve({ wordCount });
-            },
-            (error) => {
-              throw new Error(`Error: ${error}`);
-            }
-          );
-
-          dictData = null;
-        }
-      );
-    };
-    reader.readAsText(file, encoding);
+const readAsText = async (file: Blob, encoding: string, callback: ReadingCallback): Promise<string> => {
+  return new Promise((done, reject) => {
+    try {
+      const reader = new FileReader();
+      reader.onprogress = (e) => {
+        callback({ name: "reading", loaded: e.loaded, total: e.total });
+      };
+      reader.onload = (e) => {
+        done(<string>e.target.result);
+      };
+      reader.readAsText(file, encoding);
+    } catch (e) {
+      reject(e);
+    }
   });
 };
 
-const registerDefaultDict = async (fnProgress) => {
-  const dict = await loadJsonFile("/data/dict.json");
-  fnProgress(0, 0);
+const createDictParser = (format: string) => {
+  switch (format) {
+    case "TSV":
+      return new SimpleDictParser("\t");
+    case "PDIC_LINE":
+      return new SimpleDictParser(" /// ");
+    case "EIJIRO":
+      return new EijiroParser();
+    case "JSON":
+      return new JsonDictParser();
+  }
+  throw new Error("Unknown File Format: " + format);
+};
+
+export const registerDefaultDict = async (fnProgress: ProgressCallback): Promise<number> => {
+  const dict = (await loadJsonFile("/data/dict.json")) as DictionaryInformation;
+  fnProgress(0, "0");
   let wordCount = 0;
   for (let i = 0; i < dict.files.length; i++) {
     wordCount += await registerDict(dict.files[i]);
@@ -101,21 +121,15 @@ const registerDefaultDict = async (fnProgress) => {
   return wordCount;
 };
 
-const loadJsonFile = async (fname) => {
+const loadJsonFile = async (fname: string): Promise<Record<string, any>> => {
   const url = chrome.extension.getURL(fname);
   const response = await fetch(url);
   return response.json();
 };
 
-const registerDict = async (fname) => {
+const registerDict = async (fname: string): Promise<number> => {
   const dictData = await loadJsonFile(fname);
   const wordCount = Object.keys(dictData).length;
-  await save(dictData);
+  await storage.local.set(dictData);
   return wordCount;
 };
-
-const save = (dictData) => {
-  return storage.local.set(dictData);
-};
-
-export default { load, registerDefaultDict };

@@ -4,68 +4,77 @@
  * Licensed under MIT
  */
 
-import React from "react";
-import SimpleSelect from "./SimpleSelect";
-import res from "../logic/resource";
-import env from "../../settings/env";
+import React, { useRef, useState, MutableRefObject } from "react";
+import { Button } from "./Button";
+import { SimpleSelect } from "./SimpleSelect";
+import { res } from "../logic";
 
-const LoadDictionary = (props) => {
+type Encoding = "Shift-JIS" | "UTF-8" | "UTF-16";
+type Format = "EIJIRO" | "TSV" | "PDIC_LINE" | "JSON";
+
+type Props = {
+  defaultEncoding?: Encoding;
+  defaultFormat?: Format;
+  busy: boolean;
+  trigger: (e: TriggerEvent) => void;
+};
+
+type TriggerEvent =
+  | {
+      type: "load";
+      payload: {
+        file: File;
+        encoding: Encoding;
+        format: Format;
+      };
+    }
+  | { type: "clear" };
+
+export const LoadDictionary: React.FC<Props> = (props) => {
+  const [encoding, setEncoding] = useState(props.defaultEncoding);
+  const [format, setFormat] = useState(props.defaultFormat);
+
+  const fileInput = useRef() as MutableRefObject<HTMLInputElement>;
+
   const ENCODINGS = [
-    { id: "Shift-JIS", name: "Shift-JIS" },
-    { id: "UTF-8", name: "UTF-8" },
-    { id: "UTF-16", name: "UTF-16" },
+    { value: "Shift-JIS", name: "Shift-JIS" },
+    { value: "UTF-8", name: "UTF-8" },
+    { value: "UTF-16", name: "UTF-16" },
   ];
 
   const FORMATS = [
-    { id: "EIJIRO", name: res.get("formatEijiroText") },
-    { id: "TSV", name: res.get("formatTsv") },
-    { id: "PDIC_LINE", name: res.get("formatPdicOneLine") },
-    { id: "JSON", name: res.get("formatJson") },
+    { value: "EIJIRO", name: res.get("formatEijiroText") },
+    { value: "TSV", name: res.get("formatTsv") },
+    { value: "PDIC_LINE", name: res.get("formatPdicOneLine") },
+    { value: "JSON", name: res.get("formatJson") },
   ];
-
-  const changeState = (name, e) => {
-    props.changeState(name, e.target.value);
-  };
 
   return (
     <div>
       <label>{res.get("dictDataEncoding")}</label>
-      <SimpleSelect name="encoding" value={props.encoding} options={ENCODINGS} onChange={changeState} />
+      <SimpleSelect value={encoding} options={ENCODINGS} onChange={(value) => setEncoding(value as Encoding)} />
       <label>{res.get("dictDataFormat")}</label>
-      <SimpleSelect name="format" value={props.format} options={FORMATS} onChange={changeState} />
+      <SimpleSelect value={format} options={FORMATS} onChange={(value) => setFormat(value as Format)} />
       <label>{res.get("readDictData")}</label>
-      <input type="file" id="dictdata" />
+      <input type="file" ref={fileInput} />
       <br />
-      <input
-        type="button"
-        value={res.get("loadSelectedFile")}
-        style={{ marginRight: 5 }}
-        onClick={props.doLoad}
-        disabled={props.busy ? "disabled" : null}
+      <Button
+        type="primary"
+        text={res.get("loadSelectedFile")}
+        onClick={() => props.trigger({ type: "load", payload: { encoding, format, file: fileInput.current.files[0] } })}
+        disabled={props.busy}
       />
-      {!env.disableClearDataButton && (
-        <input
-          type="button"
-          value={res.get("clearLoadedData")}
-          style={{ marginRight: 5 }}
-          onClick={props.doClear}
-          disabled={props.busy ? "disabled" : null}
-        />
-      )}
       <img
         src="loading.gif"
         width="32"
         height="32"
         style={{ verticalAlign: "middle", display: props.busy ? "inline" : "none" }}
       />
-      <div style={{ fontSize: "75%" }}>
-        {props.dictDataUsage && <div>{res.get("dictDataUsage", props.dictDataUsage)}</div>}
-        <div>
-          <span>{props.progress}</span>
-        </div>
-      </div>
     </div>
   );
 };
 
-export default LoadDictionary;
+LoadDictionary.defaultProps = {
+  defaultEncoding: "Shift-JIS",
+  defaultFormat: "EIJIRO",
+};

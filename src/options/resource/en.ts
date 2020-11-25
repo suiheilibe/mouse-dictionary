@@ -14,11 +14,11 @@ export default {
   readDictData: "Load dictionary data:",
 
   selectDictFile: "Select dictionary data",
-  progressRegister: "%d words have been registered(%s)",
-  finishRegister: "Loading has finished(%d words)",
+  progressRegister: "{{count}} words have been registered({{progress}})",
+  finishRegister: "Loading has finished({{count}} words)",
   clearAllDictData: "Are you sure you want to clear all the dictionary data?",
   finishedClear: "All the dictionary data has been removed",
-  dictDataUsage: "%s kilobytes used",
+  dictDataUsage: "{{size}} kilobytes used",
   confirmLoadInitialDict: "There is no dictionary data yet.\nDo you want to register free dictionary data?",
   confirmReloadInitialDict: "Are you sure you want to reload the default dictionary data?",
   fileMayNotBeShiftJis: "The selected file may not be Shift-JIS-encoded. Are you sure you want to import the file?",
@@ -45,7 +45,7 @@ export default {
   closeAdvancedSettings: "Close advanced settings",
 
   basicSettings: "Basic settings",
-  trialText: "Text for trial",
+  previewText: "Text for preview",
   abbreviateShortWordDesc: "Truncate short word descriptions",
   abbreviateShortWordDesc0: "Truncate",
   abbreviateShortWordDesc1: "-letter or less word descriptions into",
@@ -80,11 +80,13 @@ export default {
   clearLoadedData: "CLEAR",
   loadInitialDict: "Reload default dictionary data",
   downloadDictData: "Download additional dictionary data",
+  openPdfViewer: "Open PDF viewer",
   openJsonEditor: "Open JSON editor",
   closeJsonEditor: "Cancel",
   importJson: "Apply JSON to settings",
   JsonImportError: "Invalid JSON",
-  clipboardJson: "Copy to clipboard",
   aboutJsonEditor:
     "This is JSON data which expresses the whole Mouse Dictionary's settings. Please use it for backup, sharing and so forth.",
+  skipPdfConfirmation: "Skip PDF download confirmation",
+  pdfUrlPattern: "Override PDF document judgment (regular expressions for URL)",
 };

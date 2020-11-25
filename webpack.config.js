@@ -1,6 +1,5 @@
 const CopyPlugin = require("copy-webpack-plugin");
 const TerserPlugin = require("terser-webpack-plugin");
-const LodashPlugin = require("lodash-webpack-plugin");
 const UniteJsonPlugin = require("./build_tools/webpack_plugins/UniteJsonPlugin");
 const jaRule = require("deinja/src/data");
 
@@ -13,6 +12,7 @@ const copyWebpackPluginConfigs = {
     { from: __dirname + "/node_modules/milligram/dist/milligram.min.css", to: "options/" },
     { from: __dirname + "/node_modules/ace-builds/src-min-noconflict/worker-html.js", to: "options/" },
     { from: __dirname + "/node_modules/ace-builds/src-min-noconflict/worker-json.js", to: "options/" },
+    { from: "static_pdf/options", to: "options/" },
   ],
 };
 
@@ -25,7 +25,8 @@ module.exports = {
   entry: {
     "sidebar/sidebar": "./src/sidebar/sidebar.js",
     "options/options": "./src/options/app.tsx",
-    main: "./src/main/main.js",
+    main: "./src/main/core/start.js",
+    background: "./src/background/background.js",
   },
   output: {
     path: __dirname + "/dist",
@@ -33,7 +34,7 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.(:?js|ts)$/,
+        test: /\.(js|ts|tsx)$/,
         use: {
           loader: "babel-loader",
           options: {
@@ -42,23 +43,10 @@ module.exports = {
         },
         exclude: /node_modules/,
       },
-      {
-        test: /\.(:?jsx|tsx)$/,
-        use: [
-          {
-            loader: "babel-loader",
-            options: {
-              cacheDirectory: !isProd,
-              presets: ["@babel/env", "@babel/react"],
-            },
-          },
-        ],
-        exclude: /node_modules/,
-      },
     ],
   },
   resolve: {
-    extensions: [".js", ".jsx", ".ts", ".tsx"],
+    extensions: [".js", ".ts", ".tsx"],
   },
   plugins: [
     new CopyPlugin(copyWebpackPluginConfigs),
@@ -77,7 +65,6 @@ module.exports = {
         to: "data/rule.json",
       },
     ]),
-    new LodashPlugin(),
   ],
   devtool: isProd ? false : "cheap-module-inline-source-map",
   performance: {

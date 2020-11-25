@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/wtetsu/mouse-dictionary.svg?branch=master)](https://travis-ci.org/wtetsu/mouse-dictionary)
+[![Test](https://github.com/wtetsu/mouse-dictionary/workflows/Test/badge.svg)](https://github.com/wtetsu/mouse-dictionary/actions?query=workflow%3ATest)
 [![Code Climate](https://codeclimate.com/github/wtetsu/mouse-dictionary/badges/gpa.svg)](https://codeclimate.com/github/wtetsu/mouse-dictionary)
 [![codecov](https://codecov.io/gh/wtetsu/mouse-dictionary/branch/master/graph/badge.svg)](https://codecov.io/gh/wtetsu/mouse-dictionary)
 
@@ -12,6 +12,7 @@ Features:
 - Super fast (react in 1/60 second)
 - Awesome phrases detection
 - Capable of importing your own text data
+- **Available on PDF documents!**
 - Look up connected words at one
   - camelCase -> "camel", "case"
   - snake_case -> "snake", "case"
@@ -158,6 +159,14 @@ bookmark icon, gear icon
 
 - https://www.iconfinder.com/iconsets/wpzoom-developer-icon-set
 - License: [Creative Commons (Attribution-Share Alike 3.0 Unported)](https://creativecommons.org/licenses/by-sa/3.0/)
+
+### Build-in PDF viewer
+
+[A build-in PDF viewer](https://github.com/wtetsu/pdf.js) based on [PDF.js](https://github.com/mozilla/pdf.js).
+
+### Great JavaScript libraries
+
+See [package.json](https://github.com/wtetsu/mouse-dictionary/blob/master/package.json)
 
 ## See also
 

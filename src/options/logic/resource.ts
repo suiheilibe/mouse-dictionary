@@ -4,39 +4,54 @@
  * Licensed under MIT
  */
 
-import sprintf from "sprintf-js";
+import Hogan, { Template } from "hogan.js";
 import ja from "../resource/ja";
 import en from "../resource/en";
 
-let _lang = null;
+let _lang: string = null;
 
-const setLang = (newLang) => {
+const compile = (res: Record<string, string>): Record<string, Template> => {
+  const result: Record<string, Template> = {};
+  for (const key of Object.keys(res)) {
+    result[key] = Hogan.compile(res[key]);
+  }
+  return result;
+};
+
+const compiledTemplates = {
+  ja: compile(ja),
+  en: compile(en),
+};
+
+export const setLang = (newLang: string): void => {
   _lang = newLang;
 };
 
-const get = (key, ...params) => {
-  let templates;
-  switch (_lang) {
-    case "ja":
-      templates = ja;
-      break;
-    case "en":
-      templates = en;
-      break;
-    default:
-      templates = en;
-      break;
-  }
-
-  let r;
-  const tmpl = templates[key];
-  if (tmpl) {
-    const sprintfParams = [tmpl].concat(params);
-    r = sprintf.sprintf(...sprintfParams);
-  } else {
-    r = key;
-  }
-  return r;
+export const getLang = (): string => {
+  return _lang;
 };
 
-export default { setLang, get };
+export const get = (key: string, params?: Record<string, any>): string => {
+  const templates = compiledTemplates[getLang()];
+  const template = templates?.[key];
+  if (!template) {
+    return key;
+  }
+  return template.render(params);
+};
+
+export const decideInitialLanguage = (languages: string[]): string => {
+  if (!languages) {
+    return "en";
+  }
+  const validLanguages = ["en", "ja"];
+  let result = "en";
+  for (let i = 0; i < languages.length; i++) {
+    const lang = languages[i].toLowerCase().split("-")[0];
+    if (validLanguages.includes(lang)) {
+      result = lang;
+      break;
+    }
+  }
+  return result;
+};

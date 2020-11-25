@@ -10,11 +10,11 @@ export default {
   readDictData: "辞書データの読み込み：",
 
   selectDictFile: "辞書ファイルを選択してください。",
-  progressRegister: "%d語登録(%s)",
-  finishRegister: "登録完了(%d語)",
+  progressRegister: "{{count}}語登録({{progress}})",
+  finishRegister: "登録完了({{count}}語)",
   clearAllDictData: "登録した辞書データを削除します。",
   finishedClear: "辞書データを削除しました",
-  dictDataUsage: "%sKB使用中",
+  dictDataUsage: "{{size}}KB使用中",
   confirmLoadInitialDict: "まだ辞書データが無いようです。\nフリー辞書のデータを自動登録します。",
   confirmReloadInitialDict: "デフォルト辞書データを再登録します",
   fileMayNotBeShiftJis: "このファイルはShift-JISではないかもしれません。インポート処理を実行しますか？",
@@ -41,7 +41,7 @@ export default {
   closeAdvancedSettings: "上級設定を閉じる",
 
   basicSettings: "基本設定",
-  trialText: "お試し用テキスト",
+  previewText: "お試し用テキスト",
   abbreviateShortWordDesc: "短い単語の説明を省略",
   abbreviateShortWordDesc0: " ",
   abbreviateShortWordDesc1: "文字以内の短い単語は、説明を",
@@ -77,11 +77,13 @@ export default {
   clearLoadedData: "CLEAR",
   loadInitialDict: "デフォルト辞書データの再ロード",
   downloadDictData: "追加辞書データをダウンロードする",
+  openPdfViewer: "PDFビューアを起動する",
   openJsonEditor: "JSONエディタを開く",
   closeJsonEditor: "キャンセル",
   importJson: "JSONを設定に反映",
   JsonImportError: "正しいJSONデータになっていません",
-  clipboardJson: "クリップボードにコピー",
   aboutJsonEditor:
     "Mouse Dictionary設定全体のJSONデータです。バックアップや共有にご利用ください ※辞書データは含みません",
+  skipPdfConfirmation: "PDFファイルのダウンロード確認を省略する",
+  pdfUrlPattern: "PDFドキュメント判定の上書き(URLに対する正規表現)",
 };

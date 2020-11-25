@@ -5,90 +5,39 @@
  */
 
 import React from "react";
-import AceEditor from "react-ace";
-import res from "../logic/resource";
+import immer from "immer";
+import { res } from "../logic";
+import { ReplaceRuleEditor } from "./ReplaceRuleEditor";
+import { HighlightEditor } from "./HighlightEditor";
+import { MouseDictionaryAdvancedSettings, UpdateEventHandler } from "../types";
 
-const EDITOR_STYLE = {
-  width: 800,
-  border: "1px solid #d1d1d1",
-  borderRadius: "3px",
-  fontSize: 13,
-  marginBottom: 20,
+type AdvancedSettingsProps = {
+  settings: MouseDictionaryAdvancedSettings;
+  onUpdate: UpdateEventHandler;
 };
 
-const AdvancedSettings = (props) => {
-  const settings = props.settings;
-  if (!settings) {
-    return "<div></div>";
-  }
+export const AdvancedSettings: React.FC<AdvancedSettingsProps> = (props) => {
+  const lookupWithCapitalized = props.settings?.lookupWithCapitalized ?? false;
+  const parseWordsLimit = props.settings?.parseWordsLimit ?? 8;
+  const pdfUrl = props.settings?.pdfUrl ?? "";
+  const contentWrapperTemplate = props.settings?.contentWrapperTemplate ?? "";
+  const dialogTemplate = props.settings?.dialogTemplate ?? "";
+  const contentTemplate = props.settings?.contentTemplate ?? "";
+  const normalDialogStyles = props.settings?.normalDialogStyles ?? "";
+  const movingDialogStyles = props.settings?.movingDialogStyles ?? "";
+  const hiddenDialogStyles = props.settings?.hiddenDialogStyles ?? "";
 
-  const lookupWithCapitalized = settings?.lookupWithCapitalized ?? false;
-  const contentWrapperTemplate = settings?.contentWrapperTemplate ?? "";
-  const dialogTemplate = settings?.dialogTemplate ?? "";
-  const contentTemplate = settings?.contentTemplate ?? "";
-
-  const normalDialogStyles = settings?.normalDialogStyles ?? "";
-  const movingDialogStyles = settings?.movingDialogStyles ?? "";
-  const hiddenDialogStyles = settings?.hiddenDialogStyles ?? "";
-
-  const changeSettings = (e) => {
-    const value = e.target.type === "number" ? parseInt(e.target.value, 10) : e.target.value;
-    props.changeSettings(e.target.name, value);
+  const update = (patch: Partial<MouseDictionaryAdvancedSettings>) => {
+    const newPatch = immer(patch, (d) => {
+      for (const name of Object.keys(patch)) {
+        const value = patch[name];
+        if (Number.isNaN(value) || (Number.isInteger(value) && value < 0)) {
+          d[name] = 0;
+        }
+      }
+    });
+    props.onUpdate(null, newPatch);
   };
-  const changeBoolSettings = (e) => {
-    props.changeSettings(e.target.name, e.target.checked);
-  };
-
-  const replaceRules = settings?.replaceRules ?? [];
-  const replaceRulesList = replaceRules.map((r, i) => {
-    return (
-      <div key={r.key ?? r.search}>
-        <button
-          type="button"
-          className="button button-outline button-arrow"
-          onClick={() => props.changeReplaceRule("move", { index: i, offset: -1 })}
-          disabled={i === 0}
-        >
-          ↑
-        </button>
-        <button
-          type="button"
-          className="button button-outline button-arrow"
-          onClick={() => props.changeReplaceRule("move", { index: i, offset: +1 })}
-          disabled={i === replaceRules.length - 1}
-        >
-          ↓
-        </button>
-        <input
-          type="text"
-          name={`replaceRule.search.${i}`}
-          key={`replaceRule.search.${i}`}
-          value={r.search}
-          style={{ width: 230 }}
-          onChange={(e) => props.changeReplaceRule("change", { name: e.target.name, value: e.target.value })}
-        />
-        <span>{res.get("replaceRule1")}</span>
-        <input
-          type="text"
-          name={`replaceRule.replace.${i}`}
-          key={`replaceRule.replace.${i}`}
-          value={r.replace}
-          style={{ width: 370 }}
-          onChange={(e) => props.changeReplaceRule("change", { name: e.target.name, value: e.target.value })}
-        />
-        <span>{res.get("replaceRule2")}</span>
-
-        <button
-          type="button"
-          className="button button-arrow"
-          onClick={() => props.changeReplaceRule("delete", { index: i })}
-          style={{ marginLeft: 3 }}
-        >
-          ×
-        </button>
-      </div>
-    );
-  });
 
   return (
     <form className="settingsForm">
@@ -98,9 +47,8 @@ const AdvancedSettings = (props) => {
           {res.get("lookupWithCapitalized")}
           <input
             type="checkbox"
-            name="lookupWithCapitalized"
-            value={lookupWithCapitalized}
-            onChange={changeBoolSettings}
+            onChange={(e) => update({ lookupWithCapitalized: e.target.checked })}
+            checked={lookupWithCapitalized}
           />
         </label>
         <label>
@@ -108,12 +56,20 @@ const AdvancedSettings = (props) => {
           &nbsp;
           <input
             type="number"
-            name="parseWordsLimit"
-            value={settings.parseWordsLimit}
-            onChange={changeSettings}
+            value={parseWordsLimit}
+            onChange={(e) => update({ parseWordsLimit: parseInt(e.target.value, 10) })}
             style={{ width: 60 }}
           />
         </label>
+        <label>{res.get("pdfUrlPattern")}</label>
+        &nbsp;
+        <input
+          type="text"
+          value={pdfUrl}
+          onChange={(e) => update({ pdfUrl: e.target.value })}
+          style={{ width: 600 }}
+          placeholder="\.pdf$"
+        />
         <h3>
           {res.get("htmlTemplate")}
           <a
@@ -125,94 +81,62 @@ const AdvancedSettings = (props) => {
             ?
           </a>
         </h3>
-
         <label>{res.get("htmlTemplateWindow")}</label>
-        <AceEditor
+        <HighlightEditor
           mode="html"
           theme="xcode"
-          onChange={(value) => props.changeSettings("dialogTemplate", value)}
-          name="dialogTemplate"
-          editorProps={{ $blockScrolling: true }}
+          onChange={(value) => update({ dialogTemplate: value })}
           value={dialogTemplate}
-          showPrintMargin={false}
-          highlightActiveLine={false}
-          style={{ ...EDITOR_STYLE, height: 250 }}
+          style={{ height: 250 }}
         />
-
         <label>{res.get("htmlTemplateDesc")}</label>
-        <AceEditor
+        <HighlightEditor
           mode="html"
           theme="xcode"
-          onChange={(value) => props.changeSettings("contentWrapperTemplate", value)}
-          name="contentWrapperTemplate"
-          editorProps={{ $blockScrolling: true }}
+          onChange={(value) => update({ contentWrapperTemplate: value })}
           value={contentWrapperTemplate}
-          showPrintMargin={false}
-          highlightActiveLine={false}
-          style={{ ...EDITOR_STYLE, height: 70 }}
+          style={{ height: 70 }}
         />
-
         <label>{res.get("htmlTemplateDescText")}</label>
-        <AceEditor
+        <HighlightEditor
           mode="html"
           theme="xcode"
-          onChange={(value) => props.changeSettings("contentTemplate", value)}
-          name="contentTemplate"
-          editorProps={{ $blockScrolling: true }}
+          onChange={(value) => update({ contentTemplate: value })}
           value={contentTemplate}
-          showPrintMargin={false}
-          highlightActiveLine={false}
-          style={{ ...EDITOR_STYLE, height: 400 }}
+          style={{ height: 400 }}
         />
-
         <h3>{res.get("styles")}</h3>
         <label>{res.get("stylesActive")}</label>
-        <AceEditor
+        <HighlightEditor
           mode="json"
           theme="tomorrow"
-          onChange={(e) => props.changeSettings("normalDialogStyles", e)}
-          name="normalDialogStyles"
-          editorProps={{ $blockScrolling: true }}
+          onChange={(value) => update({ normalDialogStyles: value })}
           value={normalDialogStyles}
-          showPrintMargin={false}
-          highlightActiveLine={false}
-          style={{ ...EDITOR_STYLE, height: 85 }}
+          style={{ height: 85 }}
         />
-
         <label>{res.get("stylesMoving")}</label>
-        <AceEditor
+        <HighlightEditor
           mode="json"
           theme="tomorrow"
-          onChange={(e) => props.changeSettings("movingDialogStyles", e)}
-          name="movingDialogStyles"
-          editorProps={{ $blockScrolling: true }}
+          onChange={(json) => update({ movingDialogStyles: json })}
           value={movingDialogStyles}
-          showPrintMargin={false}
-          highlightActiveLine={false}
-          style={{ ...EDITOR_STYLE, height: 85 }}
+          style={{ height: 85 }}
         />
-
         <label>{res.get("stylesInactive")}</label>
-        <AceEditor
+        <HighlightEditor
           mode="json"
           theme="tomorrow"
-          onChange={(e) => props.changeSettings("hiddenDialogStyles", e)}
-          name="hiddenDialogStyles"
-          editorProps={{ $blockScrolling: true }}
+          onChange={(value) => update({ hiddenDialogStyles: value })}
           value={hiddenDialogStyles}
-          showPrintMargin={false}
-          highlightActiveLine={false}
-          style={{ ...EDITOR_STYLE, height: 85 }}
+          style={{ height: 85 }}
         />
         <hr />
         <h3>{res.get("replaceRules")}</h3>
-        {replaceRulesList}
-        <button type="button" onClick={() => props.changeReplaceRule("add")}>
-          {res.get("add")}
-        </button>
+        <ReplaceRuleEditor
+          replaceRules={props.settings.replaceRules}
+          onUpdate={(rules) => update({ replaceRules: rules })}
+        ></ReplaceRuleEditor>
       </fieldset>
     </form>
   );
 };
-
-export default AdvancedSettings;
