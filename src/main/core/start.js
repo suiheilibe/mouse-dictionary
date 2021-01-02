@@ -130,7 +130,13 @@ const decideInitialStyles = (userSettings, storedPosition, dialogWidth) => {
 };
 
 const setEvents = async (area, userSettings) => {
-  let doUpdate = (newDom) => dom.replace(area.content, newDom);
+  let doUpdate = (newDom) => {
+    dom.replace(area.content, newDom);
+    chrome.runtime.sendMessage({
+      type: "updateSidebar",
+      value: area.content.innerHTML
+    });
+  };
 
   events.attach(userSettings, area.dialog, (newDom) => doUpdate(newDom));
 
@@ -145,7 +151,13 @@ const setEvents = async (area, userSettings) => {
     if (!(await config.isDataReady())) {
       return;
     }
-    doUpdate = (newDom) => dom.replace(area.content, newDom);
+    doUpdate = (newDom) => {
+      dom.replace(area.content, newDom);
+      chrome.runtime.sendMessage({
+        type: "updateSidebar",
+        value: area.content.innerHTML
+      });
+    };
   };
 };
 

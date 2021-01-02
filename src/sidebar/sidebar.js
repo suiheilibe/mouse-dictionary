@@ -1,19 +1,10 @@
-let myWindowId = null;
-
-browser.windows.getCurrent({populate: true}).then((windowInfo) => {
-  myWindowId = windowInfo.id;
-});
-
 let container = document.getElementById("container");
 
-let update = (newDom) => {
-  while (container.firstChild) {
-    container.removeChild(container.firstChild);
-  }
-  container.appendChild(newDom);
+let update = (html) => {
+  container.innerHTML = html;
 };
 
-browser.runtime.onMessage.addEventListener(
+chrome.runtime.onMessage.addListener(
   (message) => {
     if (message.type == "updateSidebar") {
       update(message.value);
