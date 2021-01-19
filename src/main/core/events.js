@@ -7,6 +7,7 @@
 import config from "./config";
 import rule from "./rule";
 import Lookuper from "./lookuper";
+import dom from "../lib/dom";
 import traverser from "../lib/traverser";
 import utils from "../lib/utils";
 import Draggable from "../lib/draggable";
@@ -18,7 +19,7 @@ const attach = async (settings, dialog, doUpdateContent) => {
   const lookuper = new Lookuper(settings, doUpdateContent);
 
   const draggable = new Draggable(settings.normalDialogStyles, settings.movingDialogStyles);
-  draggable.onchange = (e) => config.savePosition(e);
+  draggable.events.change = (e) => config.savePosition(e);
   draggable.add(dialog);
 
   document.body.addEventListener("mousedown", () => {
@@ -26,7 +27,7 @@ const attach = async (settings, dialog, doUpdateContent) => {
   });
 
   document.body.addEventListener("mouseup", (e) => {
-    draggable.onMouseUp();
+    draggable.onMouseUp(e);
     lookuper.suspended = false;
     lookuper.aimedLookup(utils.getSelection());
 
@@ -38,6 +39,7 @@ const attach = async (settings, dialog, doUpdateContent) => {
   const onMouseMoveFirst = async (e) => {
     // Wait until rule loading finish
     await rule.load();
+
     onMouseMove = onMouseMoveSecondOrLater;
     onMouseMove(e);
   };
@@ -49,6 +51,18 @@ const attach = async (settings, dialog, doUpdateContent) => {
   };
   let onMouseMove = onMouseMoveFirst;
   document.body.addEventListener("mousemove", (e) => onMouseMove(e));
+
+  document.body.addEventListener("keydown", (e) => {
+    if (e.key === "Shift") {
+      draggable.activateSnap(e);
+    }
+  });
+
+  document.body.addEventListener("keyup", (e) => {
+    if (e.key === "Shift") {
+      draggable.deactivateSnap(e);
+    }
+  });
 
   chrome.runtime.onMessage.addListener((request) => {
     const m = request.message;
@@ -72,6 +86,40 @@ const attach = async (settings, dialog, doUpdateContent) => {
     // First invoke
     lookuper.aimedLookup(selectedText);
   }
+
+  // Guide handling
+  let snapGuide = null;
+  draggable.events.move = () => {
+    if (snapGuide) {
+      return;
+    }
+    snapGuide = createSnapGuideElement();
+    dialog.appendChild(snapGuide);
+  };
+  draggable.events.finish = () => {
+    if (!snapGuide) {
+      return;
+    }
+    snapGuide.remove();
+    snapGuide = null;
+  };
+};
+
+const createSnapGuideElement = () => {
+  const guideElement = dom.create(`<div>Shift+Move: Smart-snap</div>`);
+  dom.applyStyles(guideElement, {
+    right: "0px",
+    top: "0px",
+    position: "absolute",
+    color: "#FFFFFF",
+    backgroundColor: "#4169e1",
+    fontSize: "small",
+    opacity: "0.90",
+    margin: "4px",
+    padding: "3px",
+    borderRadius: "5px 5px 5px 5px",
+  });
+  return guideElement;
 };
 
 export default { attach };

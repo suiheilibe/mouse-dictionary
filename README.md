@@ -28,6 +28,7 @@ Download it.
 
 - [For Chrome](https://chrome.google.com/webstore/detail/mouse-dictionary/dnclbikcihnpjohihfcmmldgkjnebgnj)
 - [For Firefox](https://addons.mozilla.org/ja/firefox/addon/mousedictionary/)
+- For Safari (See [#53](https://github.com/wtetsu/mouse-dictionary/pull/53))
 
 Use it:
 
@@ -75,6 +76,12 @@ For Firefox:
 npm run build-firefox
 ```
 
+For Safari:
+
+```sh
+npm run build-safari
+```
+
 
 #### Release build
 
@@ -88,6 +95,12 @@ For Firefox:
 
 ```sh
 npm run release-firefox
+```
+
+For Safari:
+
+```sh
+npm run release-safari
 ```
 
 ### Watch
@@ -104,6 +117,12 @@ For Firefox:
 
 ```sh
 npm run watch-firefox
+```
+
+For Safari:
+
+```sh
+npm run watch-safari
 ```
 
 

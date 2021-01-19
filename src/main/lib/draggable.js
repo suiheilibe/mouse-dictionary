@@ -7,6 +7,7 @@
 import dom from "./dom";
 import utils from "./utils";
 import edge from "./edge";
+import snap from "./snap";
 
 const MODE_NONE = 0;
 const MODE_MOVING = 1;
@@ -21,7 +22,6 @@ export default class Draggable {
     this.movingStyles = movingStyles;
     this.mainElement = null;
     this.mainElementStyle = null;
-    this.onchange = null;
     this.current = { left: null, top: null, width: null, height: null };
     this.last = { left: null, top: null, width: null, height: null };
     this.edge = edge.build({ gripWidth: 20 });
@@ -29,6 +29,16 @@ export default class Draggable {
     this.selectable = false;
     this.initialize();
     this.mouseMoveFunctions = [this.updateEdgeState, this.move, this.resize];
+    this.snap = snap.build();
+    this.enableSnap = false;
+    this.guide = null;
+
+    this.events = {
+      change: () => {},
+      move: () => {},
+      resize: () => {},
+      finish: () => {},
+    };
   }
 
   initialize() {
@@ -37,20 +47,36 @@ export default class Draggable {
     this.mode = MODE_NONE;
   }
 
-  onMouseMove(e) {
-    this.mouseMoveFunctions[this.mode].call(this, e);
+  onMouseMove(e, fit) {
+    this.mouseMoveFunctions[this.mode].call(this, e, fit);
   }
 
-  onMouseUp() {
+  onMouseUp(e) {
     if (this.mode === MODE_MOVING) {
       this.mainElementStyle.apply(this.normalStyles);
     }
-    this.finishChanging();
+    this.finishChanging(e);
+
+    // Note: keep this.enableSnap
+    this.snap.deactivate();
   }
 
   finishChanging() {
+    if (this.snap.isActivated()) {
+      this.snapElement();
+    }
     this.initialize();
     this.callOnChange();
+    this.events.finish();
+  }
+
+  snapElement() {
+    const snapRange = this.snap.getRange();
+    if (!snapRange) {
+      return;
+    }
+    this.transform(snapRange);
+    this.mainElementStyle.apply(this.normalStyles);
   }
 
   updateEdgeState(e) {
@@ -75,22 +101,31 @@ export default class Draggable {
     if (utils.areSame(this.current, latest)) {
       return;
     }
-    Object.assign(this.current, latest);
-    this.moveElement(this.current.left, this.current.top);
+
+    this.transform(latest);
+    this.events.move();
+
+    // Update auto-snap area
+    if (this.enableSnap) {
+      this.snap.activate();
+    }
+    const square = utils.omap(this.mainElement.style, utils.convertToInt, SQUARE_FIELDS);
+    this.snap.update(e.clientX, e.clientY, square, this.mainElement.clientWidth);
+
     this.mainElementStyle.apply(this.movingStyles);
   }
 
-  moveElement(left, top) {
-    this.mainElement.style.left = `${left}px`;
-    this.mainElement.style.top = `${top}px`;
+  transform(latest) {
+    for (let field of Object.keys(latest)) {
+      this.applyNewStyle(latest, field);
+    }
   }
 
   resize(e) {
     const [movedX, movedY] = this.moved(e);
     const latest = this.changingSquare.resize(movedX, movedY);
-    for (const prop of SQUARE_FIELDS) {
-      this.applyNewStyle(latest, prop);
-    }
+    this.transform(latest);
+    this.events.resize();
   }
 
   moved(e) {
@@ -100,7 +135,7 @@ export default class Draggable {
   applyNewStyle(latest, prop) {
     const cval = this.current[prop];
     const lval = latest[prop];
-    if (lval !== null && lval !== cval) {
+    if (Number.isFinite(lval) && lval !== cval) {
       this.current[prop] = lval;
       this.mainElement.style[prop] = `${lval}px`;
     }
@@ -110,7 +145,7 @@ export default class Draggable {
     if (utils.areSame(this.current, this.last)) {
       return;
     }
-    this.onchange?.({ ...this.current });
+    this.events.change({ ...this.current });
     Object.assign(this.last, this.current);
   }
 
@@ -151,17 +186,18 @@ export default class Draggable {
   }
 
   jump(edgeState) {
+    const newRange = {};
     if (edgeState & edge.LEFT) {
-      this.current.left = JUMP_SPACE;
+      newRange.left = JUMP_SPACE;
     } else if (edgeState & edge.RIGHT) {
-      this.current.left = document.documentElement.clientWidth - this.mainElement.clientWidth - JUMP_SPACE;
+      newRange.left = document.documentElement.clientWidth - this.mainElement.clientWidth - JUMP_SPACE;
     }
     if (edgeState & edge.TOP) {
-      this.current.top = JUMP_SPACE;
+      newRange.top = JUMP_SPACE;
     } else if (edgeState & edge.BOTTOM) {
-      this.current.top = window.innerHeight - this.mainElement.clientHeight - JUMP_SPACE;
+      newRange.top = window.innerHeight - this.mainElement.clientHeight - JUMP_SPACE;
     }
-    this.moveElement(this.current.left, this.current.top);
+    this.transform(newRange);
   }
 
   handleMouseDown(e) {
@@ -175,5 +211,24 @@ export default class Draggable {
     const square = utils.omap(this.mainElement.style, utils.convertToInt, SQUARE_FIELDS);
     this.changingSquare = edge.createSquare(square, this.edgeState, MIN_ELEMENT_SIZE);
     e.preventDefault();
+
+    if (this.mode === MODE_RESIZING) {
+      this.events.resize();
+    }
+    if (this.mode === MODE_MOVING) {
+      this.events.move();
+    }
+  }
+
+  activateSnap() {
+    if (this.mode === MODE_MOVING) {
+      this.snap.activate();
+    }
+    this.enableSnap = true;
+  }
+
+  deactivateSnap() {
+    this.snap.deactivate();
+    this.enableSnap = false;
   }
 }
